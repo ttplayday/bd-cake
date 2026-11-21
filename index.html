@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blow the Candle! 🎂</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff1ec;--ink:#4a2438;--sub:#8a5c70;--card:#ffffff;--pink:#ff6b9a;--pink2:#ffb3cc;--track:#f6d6e0;--flame:#ffb020;--ok:#2e9e6b;--bad:#d6455d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a1620;--ink:#ffe8ef;--sub:#d9a6b8;--card:#3b212d;--track:#5a3445;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:'Mali','Noto Sans Thai',system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:440px;padding:20px 18px 32px;text-align:center}
+h1{font-size:1.5rem;margin:4px 0 2px}
+.sub{color:var(--sub);margin:0 0 8px;font-size:.95rem}
+.cake{width:200px;height:200px;margin:6px auto 0;display:block}
+.flame{transform-origin:100px 62px;animation:flick .5s ease-in-out infinite alternate;transition:opacity .6s}
+.out .flame{opacity:0;animation:none}
+.smoke{opacity:0}
+.out .smoke{animation:rise 2.4s ease-out 2}
+@keyframes flick{from{transform:scale(1,1) rotate(-3deg)}to{transform:scale(.9,1.12) rotate(3deg)}}
+@keyframes rise{0%{opacity:.7;transform:translateY(0)}100%{opacity:0;transform:translateY(-26px)}}
+.bar{height:22px;background:var(--track);border-radius:99px;overflow:hidden;margin:8px 0 4px}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--pink2),var(--pink));border-radius:99px;transition:width .35s}
+.pct{font-weight:700;margin:0 0 14px}
+.card{background:var(--card);border-radius:22px;padding:18px;box-shadow:0 6px 24px rgba(255,107,154,.18)}
+.word{font-size:2.6rem;font-weight:700;margin:2px 0 8px}
+.timer{height:6px;background:var(--track);border-radius:9px;overflow:hidden;margin-bottom:14px}
+.timer i{display:block;height:100%;width:100%;background:var(--flame)}
+input{width:100%;font:inherit;font-size:1.15rem;padding:12px 14px;border-radius:14px;border:2px solid var(--track);background:transparent;color:var(--ink);text-align:center}
+input:focus-visible,button:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+button{font:inherit;font-weight:600;border:0;border-radius:14px;padding:12px 22px;background:var(--pink);color:#fff;cursor:pointer;margin-top:12px}
+.msg{min-height:1.6em;margin-top:10px;font-weight:600}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.hidden{display:none}
+.letter{margin-top:14px;text-align:left;line-height:1.7}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Happy Birthday, mon amour 🎂</h1>
+  <p class="sub">Translate each word to blow out your candle</p>
+  <div id="stage">
+    <svg class="cake" viewBox="0 0 200 200" aria-label="Birthday cake">
+      <ellipse cx="100" cy="182" rx="78" ry="9" fill="#00000018"/>
+      <rect x="30" y="118" width="140" height="60" rx="14" fill="#ffb3cc"/>
+      <rect x="45" y="86" width="110" height="40" rx="12" fill="#ff8fb4"/>
+      <path d="M45 98q12 14 24 0t24 0 24 0 24 0 14 0v-6q0-6-6-6H51q-6 0-6 6z" fill="#fff"/>
+      <circle cx="62" cy="150" r="5" fill="#fff"/><circle cx="100" cy="158" r="5" fill="#fff"/><circle cx="138" cy="150" r="5" fill="#fff"/>
+      <rect x="94" y="64" width="12" height="26" rx="3" fill="#7fd0ff"/>
+      <path d="M94 74l12 6M94 82l12 6" stroke="#fff" stroke-width="3"/>
+      <g class="flame"><path d="M100 36c10 10 10 20 0 26-10-6-10-16 0-26z" fill="#ffb020"/><path d="M100 46c5 5 5 10 0 13-5-3-5-8 0-13z" fill="#fff3b0"/></g>
+      <g class="smoke"><path d="M100 60q-8-8 0-16t0-16" stroke="#999" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+    </svg>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar"><div class="fill" id="fill"></div></div>
+    <p class="pct" id="pct">Love Power 0%</p>
+    <div class="card" id="game">
+      <div class="word" id="word">…</div>
+      <div class="timer"><i id="tbar"></i></div>
+      <input id="ans" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Type the English word..." aria-label="English answer">
+      <button id="go" type="button">Answer</button>
+      <div class="msg" id="msg" aria-live="polite"></div>
+    </div>
+    <div class="card hidden" id="win">
+      <div class="word" style="font-size:1.8rem">You did it! 🎉</div>
+      <p>The candle is out! Close your eyes, make a wish, and enjoy your special day.</p>
+      <button id="open" type="button">Open your letter 💌</button>
+      <div class="letter hidden" id="letter">
+        <!-- Edit this message to make it your own -->
+        To my love,<br>Happy Birthday! Thank you for always being by my side. May this year be full of smiles, good health, and dreams coming true.<br>I love you the most. ❤️
+      </div>
+      <button id="again" type="button" style="background:var(--pink2);color:var(--ink)">Play again</button>
+    </div>
+  </div>
+</main>
+<canvas id="fx"></canvas>
+<script>
+// ===== แก้ไขได้: เพิ่มคำศัพท์ที่นี่ [ไทย, [คำตอบที่ยอมรับ]] =====
+const WORDS=[["บ้าน",["house","home"]],["แม่",["mom","mother","mum","mommy","mama"]],["พ่อ",["dad","father","daddy","papa"]],["ปาก",["mouth","lip","lips"]],["ชอบ",["like"]],["กิน",["eat"]],["ข้าว",["rice"]],["อาหาร",["food"]],["สวัสดี",["hello","hi"]],["ขอบคุณ",["thank you","thanks","thankyou"]],["หมา",["dog"]],["แมว",["cat"]],["รถไฟฟ้า",["skytrain","sky train","bts","mrt","metro","subway","train"]],["ตลาด",["market"]],["ร้านอาหาร",["restaurant"]],["ตา",["eye","eyes"]],["ใช่",["yes"]],["น่ารัก",["cute","lovely","adorable"]],["ครู",["teacher"]],["คุณ",["you"]],["สีขาว",["white"]],["สีฟ้า",["blue","light blue","sky blue"]],["เดือนมิถุนายน",["june"]],["เดือนพฤศจิกายน",["november"]]];
+const UP=12, DOWN=8, DRAIN=1, LIMIT=12; // +12% ถูก, -8% ผิด, -1%/วินาที, เวลาต่อคำ 12 วิ
+let power=0,queue=[],cur=null,start=0,lastTick=0,running=false,locked=false,raf;
+const $=id=>document.getElementById(id);
+const norm=s=>s.trim().toLowerCase();
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function setPower(p){power=Math.max(0,Math.min(100,p));$('fill').style.width=power+'%';$('pct').textContent='Love Power '+Math.round(power)+'%';$('bar').setAttribute('aria-valuenow',Math.round(power));if(power>=100)win()}
+function next(){if(!queue.length)queue=shuffle(WORDS);cur=queue.pop();$('word').textContent=cur[0];$('ans').value='';start=performance.now();locked=false;$('ans').focus()}
+function say(t,c){const m=$('msg');m.textContent=t;m.className='msg '+c}
+function submit(){
+  if(!running||locked)return;const v=norm($('ans').value);if(!v)return;locked=true;
+  if(cur[1].includes(v)){say('Correct! +'+UP+'% 💖','ok');setPower(power+UP);if(running)setTimeout(next,600)}
+  else{say('Not quite. Answer: '+cur[1][0],'bad');$('game').classList.remove('shake');void $('game').offsetWidth;$('game').classList.add('shake');setPower(power-DOWN);if(running)setTimeout(next,1400)}
+}
+function loop(t){
+  if(!running)return;
+  const dt=(t-lastTick)/1000;lastTick=t;
+  if(!locked){const el=(t-start)/1000;$('tbar').style.width=Math.max(0,100-el/LIMIT*100)+'%';
+    if(el>LIMIT){say('Time is up! Try the next word 😅','bad');locked=true;setPower(power-DOWN);setTimeout(()=>{if(running)next()},900)}
+    else if(el>3){setPower(power-DRAIN*Math.min(dt,.5))}} // วัดตามเวลาจริง
+  raf=requestAnimationFrame(loop)
+}
+function begin(){running=true;queue=[];setPower(0);$('stage').classList.remove('out');$('game').classList.remove('hidden');$('win').classList.add('hidden');$('letter').classList.add('hidden');say('','');next();lastTick=performance.now();raf=requestAnimationFrame(loop)}
+function win(){if(!running)return;running=false;cancelAnimationFrame(raf);$('fill').style.width='100%';
+  $('stage').classList.add('out');$('game').classList.add('hidden');$('win').classList.remove('hidden');confetti();blow()}
+function blow(){try{const a=new (window.AudioContext||window.webkitAudioContext)();[523,659,784,1047].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.type='triangle';o.connect(g);g.connect(a.destination);const t=a.currentTime+i*.18;g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.4);o.start(t);o.stop(t+.45)})}catch(e){}}
+function confetti(){
+  const c=$('fx'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;
+  const cols=['#ff6b9a','#ffb020','#7fd0ff','#9be37f','#c79bff'];
+  const ps=Array.from({length:130},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,vx:Math.random()*2-1,vy:2+Math.random()*3,s:5+Math.random()*7,c:cols[Math.random()*5|0],h:Math.random()<.25,r:Math.random()*6}));
+  let f=0;(function d(){x.clearRect(0,0,c.width,c.height);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;x.fillStyle=p.c;if(p.h){x.font=p.s*2+'px serif';x.fillText('❤',p.x,p.y)}else{x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);x.restore()}});if(++f<320)requestAnimationFrame(d);else x.clearRect(0,0,c.width,c.height)})()
+}
+$('go').onclick=submit;
+$('ans').addEventListener('keydown',e=>{if(e.key==='Enter')submit()});
+$('open').onclick=()=>{$('letter').classList.remove('hidden');$('open').classList.add('hidden')};
+$('again').onclick=()=>{$('open').classList.remove('hidden');begin()};
+begin();
+</script>
+</body>
+</html>

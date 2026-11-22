@@ -77,7 +77,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
       <button id="open" type="button">OPEN LETTER</button>
       <div class="letter hidden" id="letter">
         <!-- Edit this message to make it your own -->
-        To my love,<br>Happy Birthday! Thank you for always being by my side. May this year be full of smiles, good health, and dreams coming true.<br>I love you the most. &#10084;
+        To Mon amour<br><br>Happy 38th Birthday! Thank you for always being by my side. May this year be full of smiles, good health, and dreams coming true.<br><br>I love you to the moon and back.<br><br>Tib
       </div>
       <button id="again" class="alt" type="button">PLAY AGAIN</button>
     </div>
@@ -87,9 +87,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
 <script>
 const WORDS=[["บ้าน",["house","home"]],["แม่",["mom","mother","mum","mommy","mama"]],["พ่อ",["dad","father","daddy","papa"]],["ปาก",["mouth","lip","lips"]],["ชอบ",["like"]],["กิน",["eat"]],["ข้าว",["rice"]],["อาหาร",["food"]],["สวัสดี",["hello","hi"]],["ขอบคุณ",["thank you","thanks","thankyou"]],["หมา",["dog"]],["แมว",["cat"]],["รถไฟฟ้า",["skytrain","sky train","bts","mrt","metro","subway","electric train"]],["ตลาด",["market"]],["ร้านอาหาร",["restaurant"]],["ตา",["eye","eyes"]],["ใช่",["yes"]],["น่ารัก",["cute","lovely","adorable"]],["ครู",["teacher"]],["คุณ",["you"]],["สีขาว",["white"]],["สีฟ้า",["blue","light blue","sky blue"]],["เดือนมิถุนายน",["june"]],["เดือนพฤศจิกายน",["november"]],["สีแดง",["red"]],["รถไฟ",["train"]],["ม้า",["horse"]],["และ",["and"]]];
 const UP=8, DOWN=8, DRAIN=1.8, GRACE=4; // +8% correct, -8% wrong, -1.8%/sec after GRACE seconds
-const LIM={word:12,math:20,custom:16}, MATH_PER_ROUND=3, CUSTOM_AT=80;
-const CUSTOM={t:'custom',q:'I am the ____ girlfriend in the world.',a:[],limit:LIM.custom}; // any answer is correct
-let power=0,queue=[],cur=null,start=0,lastTick=0,running=false,locked=false,raf,asked=false,ctx;
+const LIM={word:12,math:20,custom:16}, MATH_PER_ROUND=3, CUSTOM_AT=90;
+const FOOD=/\b(feed|eat|food|restaurant|dinner|lunch|meal|breakfast|rice|cook|buy her|take her)/;
+const CUSTOMS=[ // special questions, shown in order once power reaches CUSTOM_AT
+ {t:'custom',q:'My girlfriend is the ____ in the world.',ok:()=>true,pts:5,yes:'OF COURSE!',ans:'THE BEST',limit:LIM.custom},
+ {t:'custom',q:'If your girlfriend is hungry and you want to smoke a cigarette, which one should you do first?',ok:v=>FOOD.test(v),pts:5,yes:'GOOD BOYFRIEND!',bad:'WRONG! SHE IS HUNGRY.',ans:'TAKE HER TO EAT FIRST',limit:LIM.custom+8}
+];
+let power=0,queue=[],cur=null,start=0,lastTick=0,running=false,locked=false,raf,asked=0,ctx;
 const $=id=>document.getElementById(id);
 const norm=s=>s.trim().toLowerCase();
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -101,9 +105,9 @@ function mathQ(){const R=(a,b)=>a+(Math.random()*(b-a+1)|0),r=Math.random();let 
  else{const x=R(40,99),y=R(11,x-10);q=x+' - '+y;a=x-y}
  return {t:'math',q,a:[String(a)],limit:LIM.math}}
 function buildQueue(){return shuffle([...WORDS.map(w=>({t:'word',q:w[0],a:w[1],limit:LIM.word})),...Array.from({length:MATH_PER_ROUND},mathQ)])}
-function setPower(p){power=Math.max(0,Math.min(100,p));const n=Math.floor(power/10);[...$('bar').children].forEach((b,i)=>b.style.background=i<n?(power>=80?'#ffd23f':'#6bd66b'):'');$('pct').textContent='LOVE POWER '+Math.round(power)+'%';$('bar').setAttribute('aria-valuenow',Math.round(power));if(power>=100)win()}
+function setPower(p){power=Math.max(0,Math.min(100,p));const n=Math.floor(power/10);[...$('bar').children].forEach((b,i)=>b.style.background=i<n?(power>90?'#ffd23f':'#6bd66b'):'');$('pct').textContent='LOVE POWER '+Math.round(power)+'%';$('bar').setAttribute('aria-valuenow',Math.round(power));if(power>=100)win()}
 function next(){
-  if(power>=CUSTOM_AT&&!asked){asked=true;cur=CUSTOM}else{if(!queue.length)queue=buildQueue();cur=queue.pop()}
+  if(power>CUSTOM_AT&&asked<CUSTOMS.length){cur=CUSTOMS[asked++]}else{if(!queue.length)queue=buildQueue();cur=queue.pop()}
   $('word').textContent=cur.q;$('word').className='w '+cur.t;
   $('lab').textContent=cur.t==='math'?'SOLVE':cur.t==='custom'?'BONUS':'TRANSLATE';
   $('ans').value='';$('ans').placeholder=cur.t==='math'?'Type the number...':cur.t==='word'?'Type the English word...':'Type your answer...';
@@ -112,8 +116,8 @@ function next(){
 function say(t,c){const m=$('msg');m.textContent=t;m.className='msg '+c}
 function submit(){
   if(!running||locked)return;const v=norm($('ans').value);if(!v)return;locked=true;
-  if(cur.t==='custom'||cur.a.includes(v)){beep(OK);say(cur.t==='custom'?'OF COURSE! +'+UP:'CORRECT! +'+UP,'ok');setPower(power+UP);if(running)setTimeout(next,800)}
-  else{beep(NO);say('NOPE! ANSWER: '+cur.a[0].toUpperCase(),'bad');$('game').classList.remove('shake');void $('game').offsetWidth;$('game').classList.add('shake');setPower(power-DOWN);if(running)setTimeout(next,1500)}
+  const good=cur.t==='custom'?cur.ok(v):cur.a.includes(v),pts=cur.pts||UP;if(good){beep(OK);say((cur.yes||'CORRECT!')+' +'+pts,'ok');setPower(power+pts);if(running)setTimeout(next,800)}
+  else{beep(NO);say(cur.t==='custom'?(cur.bad||'NOPE!')+' '+cur.ans:'NOPE! ANSWER: '+cur.a[0].toUpperCase(),'bad');$('game').classList.remove('shake');void $('game').offsetWidth;$('game').classList.add('shake');setPower(power-DOWN);if(running)setTimeout(next,1500)}
 }
 function loop(t){
   if(!running)return;
@@ -123,7 +127,7 @@ function loop(t){
     else if(el>GRACE){setPower(power-DRAIN*Math.min(dt,.5))}}
   raf=requestAnimationFrame(loop)
 }
-function begin(){running=true;queue=[];asked=false;setPower(0);$('stage').classList.remove('out');$('game').classList.remove('hidden');$('win').classList.add('hidden');$('letter').classList.add('hidden');say('','');next();lastTick=performance.now();raf=requestAnimationFrame(loop)}
+function begin(){running=true;queue=[];asked=0;setPower(0);$('stage').classList.remove('out');$('game').classList.remove('hidden');$('win').classList.add('hidden');$('letter').classList.add('hidden');say('','');next();lastTick=performance.now();raf=requestAnimationFrame(loop)}
 function win(){if(!running)return;running=false;cancelAnimationFrame(raf);
   $('stage').classList.add('out');$('game').classList.add('hidden');$('win').classList.remove('hidden');beep(WIN);confetti()}
 function confetti(){
